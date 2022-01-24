@@ -5,4 +5,4 @@ writer.o:
 	$(CC) -Wall writer.c -o writer
 
 clean:
-	rm writer 
+	rm writer *.o

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #Reference: https://stackoverflow.com/questions/4651437/how-do-i-set-a-variable-to-the-output-of-a-command-in-bash
 
 if [[ $# != 2 ]] #check if the number of command line arguments are not equal to 2

@@ -63,7 +63,7 @@ fi
 
 for i in $( seq 1 $NUMFILES)
 do
-	$WRITER >> "$WRITEDIR" "$WRITESTR"
+	$WRITER  "$WRITEDIR" "$WRITESTR"
 done
 
 OUTPUTSTRING=$($FINDER "$WRITEDIR" "$WRITESTR")

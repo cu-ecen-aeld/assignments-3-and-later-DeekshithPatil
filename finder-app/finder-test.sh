@@ -7,7 +7,7 @@ set -u
 
 NUMFILES=10
 WRITESTR=AELD_IS_FUN
-WRITEDIR=/tmp/
+WRITEDIR=/tmp/assignment-4-result.txt
 username=$(cat /etc/finder-app/conf/username.txt)
 
 if ![ which sh >/dev/null]
@@ -34,7 +34,7 @@ MATCHSTR="The number of files are ${NUMFILES} and the number of matching lines a
 echo "Writing ${NUMFILES} files containing string ${WRITESTR} to ${WRITEDIR}"
 
 rm -rf "${WRITEDIR}"
-mkdir -p "$WRITEDIR"
+# mkdir -p "$WRITEDIR"
 
 #The WRITEDIR is in quotes because if the directory path consists of spaces, then variable substitution will consider it as multiple argument.
 #The quotes signify that the entire string in WRITEDIR is a single string.
@@ -52,7 +52,7 @@ fi
 
 for i in $( seq 1 $NUMFILES)
 do
-	./writer >> "$WRITEDIR/assignment-4-result.txt" "$WRITESTR"
+	./writer >> "$WRITEDIR" "$WRITESTR"
 done
 
 OUTPUTSTRING=$(./finder.sh "$WRITEDIR" "$WRITESTR")

@@ -10,7 +10,7 @@ WRITESTR=AELD_IS_FUN
 WRITEDIR=/tmp/assignment-4-result.txt
 username=$(cat /etc/finder-app/conf/username.txt)
 
-if ![ which sh >/dev/null]
+if ! [ which sh >/dev/null]
 then
 	exit 1
 fi

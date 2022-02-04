@@ -44,7 +44,8 @@ MATCHSTR="The number of files are ${NUMFILES} and the number of matching lines a
 echo "Writing ${NUMFILES} files containing string ${WRITESTR} to ${WRITEDIR}"
 
 rm -rf "${WRITEDIR}"
-touch ${WRITEDIR}
+touch "${WRITEDIR}"
+echo "Completed"
 # mkdir -p "$WRITEDIR"
 
 #The WRITEDIR is in quotes because if the directory path consists of spaces, then variable substitution will consider it as multiple argument.
@@ -54,6 +55,7 @@ if [ -d "$WRITEDIR" ]
 then
 	echo "$WRITEDIR created"
 else
+	echo "Directory not found"
 	exit 1
 fi
 
@@ -63,10 +65,10 @@ fi
 
 for i in $( seq 1 $NUMFILES)
 do
-	$WRITER  "$WRITEDIR" "$WRITESTR"
+	$WRITER  "${WRITEDIR}" "$WRITESTR"
 done
 
-OUTPUTSTRING=$($FINDER "$WRITEDIR" "$WRITESTR")
+OUTPUTSTRING=$("${FINDER}" "$WRITEDIR" "$WRITESTR")
 
 set +e
 echo ${OUTPUTSTRING} | grep "${MATCHSTR}"

@@ -70,9 +70,10 @@ done
 
 echo "completed loop"
 OUTPUTSTRING=$("${FINDER}" "$WRITEDIR" "$WRITESTR")
-
+echo "Output String: ${OUTPUTSTRING}"
+echo "Match string: ${MATCHSTR}"
 set +e
-echo ${OUTPUTSTRING} | grep "${MATCHSTR}"
+echo "${OUTPUTSTRING}" | grep "${MATCHSTR}"
 if [ $? -eq 0 ]; then
 	echo "success"
 	exit 0

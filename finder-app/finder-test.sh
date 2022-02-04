@@ -7,7 +7,8 @@ set -u
 
 NUMFILES=10
 WRITESTR=AELD_IS_FUN
-WRITEDIR=/tmp/assignment-4-result.txt
+WRITEDIR=/tmp/aeld-data
+OUTDIR=/tmp/assignment-4-result.txt
 username=$(cat /etc/finder-app/conf/username.txt)
 FINDER=$(which finder.sh)
 WRITER=$(which writer)
@@ -44,14 +45,12 @@ MATCHSTR="The number of files are ${NUMFILES} and the number of matching lines a
 echo "Writing ${NUMFILES} files containing string ${WRITESTR} to ${WRITEDIR}"
 
 rm -rf "${WRITEDIR}"
-touch "${WRITEDIR}"
-echo "Completed"
-# mkdir -p "$WRITEDIR"
+mkdir -p "$WRITEDIR"
 
 #The WRITEDIR is in quotes because if the directory path consists of spaces, then variable substitution will consider it as multiple argument.
 #The quotes signify that the entire string in WRITEDIR is a single string.
 #This issue can also be resolved by using double square brackets i.e [[ ]] instead of using quotes.
-if [ -f "$WRITEDIR" ]
+if [ -d "$WRITEDIR" ]
 then
 	echo "$WRITEDIR created"
 else
@@ -70,6 +69,7 @@ done
 
 echo "completed loop"
 OUTPUTSTRING=$("${FINDER}" "$WRITEDIR" "$WRITESTR")
+$WRITER "${OUTDIR}" "$OUTPUTSTRING"
 echo "Output String: ${OUTPUTSTRING}"
 echo "Match string: ${MATCHSTR}"
 set +e

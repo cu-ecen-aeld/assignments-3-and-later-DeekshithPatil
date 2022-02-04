@@ -68,6 +68,7 @@ do
 	$WRITER  "${WRITEDIR}" "$WRITESTR"
 done
 
+echo "completed loop"
 OUTPUTSTRING=$("${FINDER}" "$WRITEDIR" "$WRITESTR")
 
 set +e

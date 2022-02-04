@@ -8,10 +8,10 @@ set -u
 NUMFILES=10
 WRITESTR=AELD_IS_FUN
 WRITEDIR=/tmp/aeld-data
-OUTDIR=/tmp/assignment-4-result.txt
 username=$(cat /etc/finder-app/conf/username.txt)
 FINDER=$(which finder.sh)
 WRITER=$(which writer)
+OUTDIR=/tmp/assignment-4-result.txt
 
 if ! [ $FINDER ]
 then
@@ -24,7 +24,6 @@ then
 	echo "Writer not found"
 	exit 1
 fi
-
 
 if [ $# -lt 2 ]
 then
@@ -54,7 +53,6 @@ if [ -d "$WRITEDIR" ]
 then
 	echo "$WRITEDIR created"
 else
-	echo "Directory not found"
 	exit 1
 fi
 
@@ -64,16 +62,13 @@ fi
 
 for i in $( seq 1 $NUMFILES)
 do
-	$WRITER  "${WRITEDIR}" "$WRITESTR"
+	"$WRITER" "$WRITEDIR/${username}$i.txt" "$WRITESTR"
 done
 
-echo "completed loop"
 OUTPUTSTRING=$("${FINDER}" "$WRITEDIR" "$WRITESTR")
-$WRITER "${OUTDIR}" "$OUTPUTSTRING"
-echo "Output String: ${OUTPUTSTRING}"
-echo "Match string: ${MATCHSTR}"
+"$WRITER" "${OUTDIR}" "$OUTPUTSTRING"
 set +e
-echo "${OUTPUTSTRING}" | grep "${MATCHSTR}"
+echo ${OUTPUTSTRING} | grep "${MATCHSTR}"
 if [ $? -eq 0 ]; then
 	echo "success"
 	exit 0

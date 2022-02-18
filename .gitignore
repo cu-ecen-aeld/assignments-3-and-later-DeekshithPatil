@@ -6,4 +6,9 @@ crosstool-ng
 aesd-build
 .vscode/
 test.sh.log
+<<<<<<< HEAD
 actions-runner/
+=======
+aesdsocket
+server/aesdsocket
+>>>>>>> assignments-base/assignment5

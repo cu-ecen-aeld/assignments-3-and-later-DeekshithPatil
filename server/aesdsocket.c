@@ -5,6 +5,7 @@
 *
 * Reference -https://stackoverflow.com/questions/3060950/how-to-get-ip-address-from-sock-structure-in-c
 *           -https://stackoverflow.com/questions/17954432/creating-a-daemon-in-linux
+*           -https://stackoverflow.com/questions/24194961/how-do-i-use-setsockoptso-reuseaddr
 */
 
 #include <stdio.h> 
@@ -39,26 +40,22 @@ static void daemonize_process();
 */
 void signal_handler(int signo)
 {
-    //TODO: Logs message to the syslog “Caught signal, exiting” when SIGINT or SIGTERM is received
+    //Logs message to the syslog “Caught signal, exiting” when SIGINT or SIGTERM is received
     syslog(LOG_USER,"Caught signal, exiting\n");
-    // printf("Caught!\n");
+
     if(clientfd > 0)
     {
-        // printf("Closed client file descriptor!\n");
         close(clientfd);
     }
 
     if(sockfd > 0)
     {
-        // printf("Closed socket!\n");
         shutdown(clientfd,SHUT_RDWR);
         close(sockfd);
     }
 
     if(fd > 0)
     {
-        // printf("Closed file descriptor!\n");
-
         //deleting the file /var/tmp/aesdsocketdata
         remove("/var/tmp/aesdsocketdata");
         close(fd);
@@ -121,6 +118,9 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0)
+        perror("setsockopt(SO_REUSEADDR) failed");
+
     memset((void *)&serv_addr,0,sizeof(serv_addr)); //Set serv_addr to 0
     
     //Set the server characteristics 
@@ -130,7 +130,6 @@ int main(int argc, char *argv[])
     serv_addr.sin_port = htons(PORT_NO); //host to network short
 
     int ret = bind(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
-    printf("bind return value = %d\n",ret);
     if(ret < 0)
      {
          perror("Binding failed");
@@ -159,11 +158,8 @@ int main(int argc, char *argv[])
         listen(sockfd, 5);
 
         clilen = sizeof(cli_addr);
-
-        // printf("Waiting for a connection!\n");
      
         clientfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
-        
 
         if(clientfd < 0)
         {
@@ -172,7 +168,6 @@ int main(int argc, char *argv[])
         }
 
         //Logs message to the syslog “Accepted connection from xxx” where XXXX is the IP address of the connected client
-        // printf("Accepted connection from %s\n",inet_ntoa(cli_addr.sin_addr));
         syslog(LOG_USER,"Accepted connection from %s\n",inet_ntoa(cli_addr.sin_addr));
 
         //Initialise a temp buffer to read data
@@ -194,13 +189,11 @@ int main(int argc, char *argv[])
             temp_buff[idx] = temp;
             idx++;
             temp_buff = (char *)realloc(temp_buff,sizeof(char) * (idx + 1));
-            // printf("%c",temp);
 
             if(temp == '\n')
             {
                 //write buffer to the file of len 'idx'
                 n = write(fd,temp_buff,idx);
-                // printf("\nTotal Bytes Written = %ld",idx);
                 idx = 0;
                 free(temp_buff);
                 temp_buff = NULL;
@@ -209,8 +202,6 @@ int main(int argc, char *argv[])
 
 
         }
-
-        // printf("\nCompleted Reading from socket!\n");
 
         //read the entire contents of the file and transfer it over the socket
         lseek(fd,0,SEEK_SET);
@@ -226,7 +217,6 @@ int main(int argc, char *argv[])
                 //EOF file reached
                 break;
             }
-            // printf("%c",temp);
             write(clientfd,&temp,1);
 
 
@@ -248,7 +238,6 @@ int main(int argc, char *argv[])
 
 static void daemonize_process()
 {
-    printf("Inside daemonize_process!\n");
     pid_t pid;
 
     pid = fork();
@@ -279,21 +268,12 @@ static void daemonize_process()
         exit(-1);
     }
 
-    printf("setsid() successfull!\n");
-
     //Change working directory to root directory
     chdir("/");
 
-    printf("Redirecting stdin stdout stderror\n");
     //close all file descriptors
     close(STDIN_FILENO);
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
-
-    //Redirect stdin, stdout, stderror
-    // open("/dev/null",O_RDONLY); //stdin
-    // open("/dev/null",O_RDWR); //stdout
-    // open("/dev/null",O_RDWR); //stderror
-
 
 }

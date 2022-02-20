@@ -1,7 +1,13 @@
+#Make file to compile aesdsocket
+
+CROSS_COMPILE=
+
+CC=$(CROSS_COMPILE)gcc
+
 all: aesdsocket
 
 aesdsocket: aesdsocket.c
-	gcc -Wall -Werror aesdsocket.c -o aesdsocket
+	$(CC) -Wall -Werror aesdsocket.c -o aesdsocket
 
 clean:
 	rm -rf aesdsocket

@@ -7,7 +7,7 @@ CC=$(CROSS_COMPILE)gcc
 all: aesdsocket
 
 aesdsocket: aesdsocket.c
-	$(CC) -Wall -Werror aesdsocket.c -o aesdsocket
+	$(CC) -Wall -Werror -g aesdsocket.c -lpthread -o aesdsocket
 
 clean:
 	rm -rf aesdsocket

@@ -115,7 +115,6 @@ static void * threadFunc(void *arg)
         if(n < 1)
         {
             //Error in recv()
-            printf("client file descriptor = %d\n",data->clientfd);
             perror("recv failed");
             exit(-1);
 
@@ -178,34 +177,59 @@ static void *timer_threadFunc(void * arg)
 
     while(1)
     {
-        sleep(10);
+        //sleep for 10 seconds
+        for(int i = 0; i<10; i++)
+        {
+            sleep(1);
+
+            if(g_terminateFlag)
+            {
+                break;
+            }
+        }
+        
 
         if(g_terminateFlag)
         {
             break;
         }
 
+        //Get the time flag
         time(&rawtime);
         info = localtime(&rawtime);
 
         //Lock the mutex
         int ret = pthread_mutex_lock(&mutex);
 
+        //set the global exit flag and return if there's an error
+        if(ret!=0)
+        {
+            perror("pthread_mutex_lock");
+            g_terminateFlag = true;
+            pthread_exit(NULL);
+        }
         
         if(ret!=0)
             perror("pthread_mutex_lock");   
 
+        //Write the timestamp to the file
         write(fd,stamp,strlen(stamp));
 
         strftime(buffer,80,"%a, %d %b %Y %T %z", info);
         write(fd,buffer,strlen(buffer));
         write(fd,&new_line,1);
 
-        //TODO: set the global exit flag and return if there's an error
+        
         ret = pthread_mutex_unlock(&mutex); //Unlock the mutex
 
+        //set the global exit flag and return if there's an error
         if(ret!=0)
-            perror("pthread_mutex_lock");         
+        {
+            perror("pthread_mutex_lock");
+            g_terminateFlag = true;
+            pthread_exit(NULL);
+        }
+                     
 
     }
     
@@ -294,7 +318,7 @@ int main(int argc, char *argv[])
      }
 
     //Thread to print the timestamp every 10 seconds
-    pthread_create(&timer_thread,NULL,timer_threadFunc,NULL);
+    bool timer_thread_created = false;
 
     while(1)
     {
@@ -314,6 +338,12 @@ int main(int argc, char *argv[])
             }
 
             graceful_exit();
+        }
+
+        if(!timer_thread_created)
+        {
+            pthread_create(&timer_thread,NULL,timer_threadFunc,NULL);
+            timer_thread_created = true;
         }
 
         if(clientfd < 0)
@@ -343,7 +373,7 @@ int main(int argc, char *argv[])
         //Insert into the linked list
         TAILQ_INSERT_TAIL(&head,data,next);
 
-        //Iterate loop
+        //Iterate loop. temp holds the previous node that needs to be freed.
         void * res;
         int s;
         thread_data * temp = NULL;
@@ -361,8 +391,8 @@ int main(int argc, char *argv[])
                 if(s!=0)
                 {
                     perror("pthread_join error");
-                    //TODO: write logic for graceful exit
-                    exit(-1);
+                    
+                    graceful_exit();
                 }
 
                 //Shutdown the client fd
@@ -375,19 +405,17 @@ int main(int argc, char *argv[])
                 TAILQ_REMOVE(&head,data,next);
 
                 temp = data;
-                
-                // break;
             }
         
         }
 
+        //If any node is still pending to be free'd, free it
         if(temp!=NULL)
         {
             free(temp);
             temp = NULL;
         }
 
-        //TODO: Free data and set it to NULL
         data = NULL;
     }
 
@@ -424,7 +452,7 @@ void graceful_exit()
 
     void * res;
     thread_data *data;
-    thread_data *temp = NULL;
+    thread_data *temp = NULL; //Temp holds the previous node that needs to be freed
     TAILQ_FOREACH(data, &head, next)
     {
         if(temp != NULL)

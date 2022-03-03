@@ -29,9 +29,43 @@
 struct aesd_buffer_entry *aesd_circular_buffer_find_entry_offset_for_fpos(struct aesd_circular_buffer *buffer,
 			size_t char_offset, size_t *entry_offset_byte_rtn )
 {
-    /**
-    * TODO: implement per description
-    */
+    
+    int run_len = 0;
+    int prev_run_len = 0;
+    int read_idx = buffer->out_offs;
+
+    if((buffer->full == false) && (buffer->in_offs == buffer->out_offs))
+    {
+        return NULL;
+    }
+
+    while(1)
+    {
+
+        run_len += buffer->entry[read_idx].size;
+
+        if(char_offset <= (run_len - 1))
+        {
+            *entry_offset_byte_rtn = char_offset - prev_run_len;
+
+            return (&buffer->entry[read_idx]);
+
+        }
+
+        read_idx = (read_idx + 1) % AESDCHAR_MAX_WRITE_OPERATIONS_SUPPORTED;
+
+        prev_run_len = run_len;
+
+        if(read_idx == buffer->in_offs)
+        {
+            break;
+        }
+
+    }
+
+
+
+
     return NULL;
 }
 
@@ -44,9 +78,34 @@ struct aesd_buffer_entry *aesd_circular_buffer_find_entry_offset_for_fpos(struct
 */
 void aesd_circular_buffer_add_entry(struct aesd_circular_buffer *buffer, const struct aesd_buffer_entry *add_entry)
 {
-    /**
-    * TODO: implement per description 
-    */
+
+    //If buffer is full: out and in offsets should be incremented (circularly)
+    if(buffer->full == true)
+    {
+        buffer->entry[buffer->in_offs].buffptr = add_entry->buffptr;
+        buffer->entry[buffer->in_offs].size = add_entry->size;
+
+        buffer->in_offs = (buffer->in_offs + 1) % AESDCHAR_MAX_WRITE_OPERATIONS_SUPPORTED;
+
+        buffer->out_offs = buffer->in_offs;
+
+    }
+
+    //If buffer is empty: Only in offset should be incremented (circularly)
+    else
+    {
+        buffer->entry[buffer->in_offs].buffptr = add_entry->buffptr;
+        buffer->entry[buffer->in_offs].size = add_entry->size;
+
+        buffer->in_offs = (buffer->in_offs + 1) % AESDCHAR_MAX_WRITE_OPERATIONS_SUPPORTED;
+
+        if(buffer->in_offs == 0)
+        {
+            buffer->full = true;
+        }
+    }
+
+
 }
 
 /**

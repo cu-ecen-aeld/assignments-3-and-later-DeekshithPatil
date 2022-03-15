@@ -103,6 +103,16 @@ void signal_handler(int signo)
 */
 static void * threadFunc(void *arg)
 {
+     //file needed for append (/var/tmp/aesdsocketdata), creating this file if it doesn’t exist
+     int fd = open(FILE_PATH,O_RDWR | O_TRUNC | O_CREAT, 0666);
+
+     if(fd == -1)
+     {
+         perror("Error opening file");
+         g_terminateFlag = true;
+         pthread_exit(NULL);
+     }
+
     thread_data * data = (thread_data *) arg;
 
     //Paramters used in recieving data
@@ -172,6 +182,8 @@ static void * threadFunc(void *arg)
     }
 
     free(temp_read);
+
+    close(fd);
 
     ret = pthread_mutex_unlock(&mutex);
 
@@ -330,14 +342,6 @@ int main(int argc, char *argv[])
         // daemon(0,0);
      }
 
-     //file needed for append (/var/tmp/aesdsocketdata), creating this file if it doesn’t exist
-     fd = open(FILE_PATH,O_RDWR | O_TRUNC | O_CREAT, 0666);
-
-     if(fd == -1)
-     {
-         perror("Error opening file");
-         exit(-1);
-     }
 
     //Thread to print the timestamp every 10 seconds
     #ifndef USE_AESD_CHAR_DEVICE
@@ -459,12 +463,14 @@ void graceful_exit()
 
     free(data);
     
-    if(fd > 0)
-    {
-        //deleting the file /var/tmp/aesdsocketdata
-        remove(FILE_PATH);
-        close(fd);
-    }
+    // if(fd > 0)
+    // {
+    //     //deleting the file /var/tmp/aesdsocketdata
+    //     remove(FILE_PATH);
+    //     close(fd);
+    // }
+
+    remove(FILE_PATH);
 
     if(clientfd > 0)
     {

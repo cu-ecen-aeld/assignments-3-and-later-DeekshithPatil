@@ -47,7 +47,7 @@ pthread_t timer_thread=(pthread_t)NULL;
 bool g_terminateFlag=false;
 
 int sockfd=-1, clientfd=-1; //file descriptors of client and the server's socket
-int fd=-1; //file descriptor for /var/tmp/aesdsocketdata
+// int fd=-1; //file descriptor for /var/tmp/aesdsocketdata
 
 int daemonize = 0; //Used to check if the "-d" flag is set. If set, the process is daemonised
 
@@ -106,15 +106,15 @@ static void * threadFunc(void *arg)
      //file needed for append (/var/tmp/aesdsocketdata), creating this file if it doesn’t exist
      int fd = open(FILE_PATH,O_RDWR | O_TRUNC | O_CREAT, 0666);
 
-     if(fd == -1)
-     {
-         perror("Error opening file");
-         g_terminateFlag = true;
-         pthread_exit(NULL);
-     }
+    //  if(fd == -1)
+    //  {
+    //      perror("Error opening file");
+    //      g_terminateFlag = true;
+    //      pthread_exit(NULL);
+    //  }
 
     thread_data * data = (thread_data *) arg;
-
+    data->fd = fd;
     //Paramters used in recieving data
     char temp;
     unsigned long idx=0;
@@ -389,7 +389,7 @@ int main(int argc, char *argv[])
         data = (thread_data *)malloc(sizeof(thread_data));
 
         //Initialise the data that needs to be passed to the head function
-        data->fd = fd;
+        // data->fd = fd;
         data->clientfd = clientfd;
         data->thread_complete = false;
 

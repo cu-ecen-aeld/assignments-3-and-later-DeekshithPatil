@@ -28,14 +28,26 @@
 
 #define PORT_NO             9000
 
+#define USE_AESD_CHAR_DEVICE    1
+
+#ifdef USE_AESD_CHAR_DEVICE 
+#define FILE_PATH           "/dev/aesdchar"
+#endif
+
+#ifndef USE_AESD_CHAR_DEVICE
+#define FILE_PATH           "/var/tmp/aesdsocketdata"
+#endif
+
 //Thread to print time stamps
+#ifndef USE_AESD_CHAR_DEVICE
 pthread_t timer_thread=(pthread_t)NULL;
+#endif
 
 //Boolean flag to indicate if the process needs to be termintaed
 bool g_terminateFlag=false;
 
 int sockfd=-1, clientfd=-1; //file descriptors of client and the server's socket
-int fd=-1; //file descriptor for /var/tmp/aesdsocketdata
+// int fd=-1; //file descriptor for /var/tmp/aesdsocketdata
 
 int daemonize = 0; //Used to check if the "-d" flag is set. If set, the process is daemonised
 
@@ -85,18 +97,30 @@ void signal_handler(int signo)
 
 }
 
+
 /*
 * Brief- Thread function that interacts with the client
 */
 static void * threadFunc(void *arg)
 {
-    thread_data * data = (thread_data *) arg;
+     //file needed for append (/var/tmp/aesdsocketdata), creating this file if it doesn’t exist
+     int fd = open(FILE_PATH,O_RDWR | O_TRUNC | O_CREAT, 0666);
 
+    //  if(fd == -1)
+    //  {
+    //      perror("Error opening file");
+    //      g_terminateFlag = true;
+    //      pthread_exit(NULL);
+    //  }
+
+    thread_data * data = (thread_data *) arg;
+    data->fd = fd;
     //Paramters used in recieving data
     char temp;
     unsigned long idx=0;
     int n;
     char *temp_buff = NULL; //pointer used to store recieved data through socket
+    char *temp_read = NULL;
 
     //Initialise a temp buffer to read data
     temp_buff = (char *)malloc(sizeof(char));
@@ -142,18 +166,24 @@ static void * threadFunc(void *arg)
     //read the entire contents of the file and transfer it over the socket
     lseek(fd,0,SEEK_SET);
 
+    temp_read = (char *)malloc(sizeof(char));
+
     while(1)
     {
-        n = read(data->fd,&temp,1);
+        n = read(data->fd,temp_read,1);
         
         if(n==0)
         {
             //EOF file reached
             break;
         }
-        write(data->clientfd,&temp,1);
+        write(data->clientfd,temp_read,1);
 
     }
+
+    free(temp_read);
+
+    close(fd);
 
     ret = pthread_mutex_unlock(&mutex);
 
@@ -166,6 +196,8 @@ static void * threadFunc(void *arg)
     pthread_exit(NULL);
 
 }
+
+#ifndef USE_AESD_CHAR_DEVICE
 
 static void *timer_threadFunc(void * arg)
 {
@@ -236,6 +268,8 @@ static void *timer_threadFunc(void * arg)
 
      pthread_exit(NULL);
 }
+
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -308,17 +342,11 @@ int main(int argc, char *argv[])
         // daemon(0,0);
      }
 
-     //file needed for append (/var/tmp/aesdsocketdata), creating this file if it doesn’t exist
-     fd = open("/var/tmp/aesdsocketdata",O_RDWR | O_TRUNC | O_CREAT, 0666);
-
-     if(fd == -1)
-     {
-         perror("Error opening file");
-         exit(-1);
-     }
 
     //Thread to print the timestamp every 10 seconds
+    #ifndef USE_AESD_CHAR_DEVICE
     bool timer_thread_created = false;
+    #endif
 
     while(1)
     {
@@ -340,11 +368,13 @@ int main(int argc, char *argv[])
             graceful_exit();
         }
 
+        #ifndef USE_AESD_CHAR_DEVICE
         if(!timer_thread_created)
         {
             pthread_create(&timer_thread,NULL,timer_threadFunc,NULL);
             timer_thread_created = true;
         }
+        #endif
 
         if(clientfd < 0)
         {
@@ -359,7 +389,7 @@ int main(int argc, char *argv[])
         data = (thread_data *)malloc(sizeof(thread_data));
 
         //Initialise the data that needs to be passed to the head function
-        data->fd = fd;
+        // data->fd = fd;
         data->clientfd = clientfd;
         data->thread_complete = false;
 
@@ -433,12 +463,14 @@ void graceful_exit()
 
     free(data);
     
-    if(fd > 0)
-    {
-        //deleting the file /var/tmp/aesdsocketdata
-        remove("/var/tmp/aesdsocketdata");
-        close(fd);
-    }
+    // if(fd > 0)
+    // {
+    //     //deleting the file /var/tmp/aesdsocketdata
+    //     remove(FILE_PATH);
+    //     close(fd);
+    // }
+
+    remove(FILE_PATH);
 
     if(clientfd > 0)
     {
@@ -483,7 +515,7 @@ void graceful_exit()
         temp = NULL;
     }
 
-
+    #ifndef USE_AESD_CHAR_DEVICE
     if(timer_thread)
     {
        int s = pthread_join(timer_thread,&res);
@@ -491,6 +523,7 @@ void graceful_exit()
        if(s!=0)
         perror("Timer thread join:");
     }
+    #endif
 
     exit(0);
 

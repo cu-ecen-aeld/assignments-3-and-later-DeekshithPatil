@@ -34,6 +34,7 @@ struct aesd_buffer_entry *aesd_circular_buffer_find_entry_offset_for_fpos(struct
     int prev_run_len = 0;
     int read_idx = buffer->out_offs;
 
+    //Buffer is empty
     if((buffer->full == false) && (buffer->in_offs == buffer->out_offs))
     {
         return NULL;
@@ -88,7 +89,7 @@ void aesd_circular_buffer_add_entry(struct aesd_circular_buffer *buffer, const s
 
     }
 
-    //If buffer is empty: Only in offset should be incremented (circularly)
+    //If buffer is not full: Only in offset should be incremented (circularly)
     else
     {
         buffer->entry[buffer->in_offs].buffptr = add_entry->buffptr;
@@ -101,7 +102,6 @@ void aesd_circular_buffer_add_entry(struct aesd_circular_buffer *buffer, const s
             buffer->full = true;
         }
     }
-
 
 }
 
